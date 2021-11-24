@@ -781,6 +781,7 @@ endif
 project_build_root = meson.current_build_dir()
 
 subdir('gtk/css')
+subdir('gtk/json')
 subdir('gdk')
 subdir('gsk')
 subdir('gtk')
