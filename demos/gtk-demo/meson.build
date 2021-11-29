@@ -55,6 +55,7 @@ demos = files([
   'listview_filebrowser.c',
   'listview_minesweeper.c',
   'dropdown.c',
+  'listview_releases.c',
   'listview_settings.c',
   'listview_ucd.c',
   'listview_weather.c',
@@ -100,7 +101,7 @@ demos = files([
   'video_player.c',
 ])
 
-gtkdemo_deps = [ libgtk_dep, ]
+gtkdemo_deps = [ libgtk_dep, libgtk_json_dep ]
 
 extra_demo_sources = files([
   'main.c',
@@ -244,6 +245,7 @@ executable('gtk4-demo',
   include_directories: confinc,
   gui_app: true,
   link_args: extra_demo_ldflags,
+  link_with: [ libgtk_json, ],
   install: true,
 )
 
