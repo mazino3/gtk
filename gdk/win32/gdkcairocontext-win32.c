@@ -54,7 +54,7 @@ create_cairo_surface_for_surface (GdkSurface *surface,
 static void
 gdk_win32_cairo_context_begin_frame (GdkDrawContext *draw_context,
                                      gboolean        prefers_high_depth,
-                                     cairo_region_t *region)
+                                     cairo_region_t *update_area)
 {
   GdkWin32CairoContext *self = GDK_WIN32_CAIRO_CONTEXT (draw_context);
   GdkSurface *surface;
@@ -100,7 +100,7 @@ gdk_win32_cairo_context_begin_frame (GdkDrawContext *draw_context,
       self->paint_surface = cairo_surface_reference (self->db_surface);
     }
 
-  /* Clear the paint region.
+  /* Clear the paint region (update_area).
    * For non-double-buffered rendering we must clear it, otherwise
    * semi-transparent pixels will "add up" with each repaint.
    * We must also clear the old pixels from the DB cache surface
@@ -109,7 +109,7 @@ gdk_win32_cairo_context_begin_frame (GdkDrawContext *draw_context,
   cr = cairo_create (self->paint_surface);
   cairo_set_source_rgba (cr, 0, 0, 0, 00);
   cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
-  gdk_cairo_region (cr, region);
+  gdk_cairo_region (cr, update_area);
   cairo_clip (cr);
   cairo_paint (cr);
   cairo_destroy (cr);
