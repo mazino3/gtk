@@ -30,16 +30,12 @@ struct _GdkWaylandSurface
   GdkSurface parent_instance;
 
   struct {
-    /* The wl_outputs that this surface currently touches */
-    GSList               *outputs;
-
-    struct wl_surface    *wl_surface;
-
+    GSList *outputs;
+    struct wl_surface *wl_surface;
     struct xdg_surface *xdg_surface;
     struct xdg_toplevel *xdg_toplevel;
     struct xdg_popup *xdg_popup;
 
-    /* Legacy xdg-shell unstable v6 fallback support */
     struct zxdg_surface_v6 *zxdg_surface_v6;
     struct zxdg_toplevel_v6 *zxdg_toplevel_v6;
     struct zxdg_popup_v6 *zxdg_popup_v6;
