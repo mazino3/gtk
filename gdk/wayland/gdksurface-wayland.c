@@ -129,6 +129,9 @@ struct _GdkWaylandToplevel
   GdkGeometry geometry_hints;
   GdkSurfaceHints geometry_mask;
   GdkGeometry last_sent_geometry_hints;
+
+  struct zxdg_imported_v1 *imported_transient_for;
+  struct zxdg_imported_v2 *imported_transient_for_v2;
 };
 
 typedef struct
@@ -1013,15 +1016,14 @@ gdk_wayland_surface_sync_parent (GdkSurface *surface,
 }
 
 static void
-gdk_wayland_surface_sync_parent_of_imported (GdkWaylandSurface *impl)
+gdk_wayland_toplevel_sync_parent_of_imported (GdkWaylandToplevel *toplevel)
 {
-  if (!impl->display_server.wl_surface)
-    return;
+  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (toplevel);
 
   if (!impl->imported_transient_for && !impl->imported_transient_for_v2)
     return;
 
-  if (!is_realized_toplevel (impl))
+  if (!impl->display_server.wl_surface)
     return;
 
   if (impl->imported_transient_for)
@@ -1930,7 +1932,7 @@ gdk_wayland_surface_create_xdg_toplevel (GdkWaylandToplevel *wayland_toplevel)
     }
 
   gdk_wayland_surface_sync_parent (surface, NULL);
-  gdk_wayland_surface_sync_parent_of_imported (wayland_surface);
+  gdk_wayland_toplevel_sync_parent_of_imported (wayland_toplevel);
   gdk_wayland_toplevel_sync_title (wayland_toplevel);
 
   switch (display_wayland->shell_variant)
@@ -4562,10 +4564,13 @@ gdk_wayland_toplevel_unexport_handle (GdkToplevel *toplevel)
 static void
 unset_transient_for_exported (GdkSurface *surface)
 {
-  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
+  if (GDK_IS_WAYLAND_TOPLEVEL (surface))
+    {
+      GdkWaylandToplevel *toplevel = GDK_WAYLAND_TOPLEVEL (surface);
 
-  g_clear_pointer (&impl->imported_transient_for, zxdg_imported_v1_destroy);
-  g_clear_pointer (&impl->imported_transient_for_v2, zxdg_imported_v2_destroy);
+      g_clear_pointer (&impl->imported_transient_for, zxdg_imported_v1_destroy);
+      g_clear_pointer (&impl->imported_transient_for_v2, zxdg_imported_v2_destroy);
+    }
 }
 
 static void
@@ -4611,9 +4616,10 @@ gboolean
 gdk_wayland_toplevel_set_transient_for_exported (GdkToplevel *toplevel,
                                                  const char  *parent_handle_str)
 {
-  GdkWaylandSurface *impl;
-  GdkWaylandDisplay *display_wayland;
+  GdkWaylandToplevel *wayland_toplevel = GDK_WAYLAND_TOPLEVEL (toplevel);
+  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (toplevel);
   GdkDisplay *display = gdk_surface_get_display (GDK_SURFACE (toplevel));
+  GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (display);
 
   g_return_val_if_fail (GDK_IS_WAYLAND_TOPLEVEL (toplevel), FALSE);
   g_return_val_if_fail (GDK_IS_WAYLAND_DISPLAY (display), FALSE);
@@ -4646,7 +4652,7 @@ gdk_wayland_toplevel_set_transient_for_exported (GdkToplevel *toplevel,
                                      toplevel);
     }
 
-  gdk_wayland_surface_sync_parent_of_imported (impl);
+  gdk_wayland_toplevel_sync_parent_of_imported (wayland_toplevel);
 
   return TRUE;
 }
