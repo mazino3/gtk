@@ -1020,17 +1020,17 @@ gdk_wayland_toplevel_sync_parent_of_imported (GdkWaylandToplevel *toplevel)
 {
   GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (toplevel);
 
-  if (!impl->imported_transient_for && !impl->imported_transient_for_v2)
+  if (!toplevel->imported_transient_for && !toplevel->imported_transient_for_v2)
     return;
 
   if (!impl->display_server.wl_surface)
     return;
 
-  if (impl->imported_transient_for)
-    zxdg_imported_v1_set_parent_of (impl->imported_transient_for,
+  if (toplevel->imported_transient_for)
+    zxdg_imported_v1_set_parent_of (toplevel->imported_transient_for,
                                     impl->display_server.wl_surface);
   else
-    zxdg_imported_v2_set_parent_of (impl->imported_transient_for_v2,
+    zxdg_imported_v2_set_parent_of (toplevel->imported_transient_for_v2,
                                     impl->display_server.wl_surface);
 }
 
@@ -4568,8 +4568,8 @@ unset_transient_for_exported (GdkSurface *surface)
     {
       GdkWaylandToplevel *toplevel = GDK_WAYLAND_TOPLEVEL (surface);
 
-      g_clear_pointer (&impl->imported_transient_for, zxdg_imported_v1_destroy);
-      g_clear_pointer (&impl->imported_transient_for_v2, zxdg_imported_v2_destroy);
+      g_clear_pointer (&toplevel->imported_transient_for, zxdg_imported_v1_destroy);
+      g_clear_pointer (&toplevel->imported_transient_for_v2, zxdg_imported_v2_destroy);
     }
 }
 
@@ -4617,14 +4617,12 @@ gdk_wayland_toplevel_set_transient_for_exported (GdkToplevel *toplevel,
                                                  const char  *parent_handle_str)
 {
   GdkWaylandToplevel *wayland_toplevel = GDK_WAYLAND_TOPLEVEL (toplevel);
-  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (toplevel);
   GdkDisplay *display = gdk_surface_get_display (GDK_SURFACE (toplevel));
   GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (display);
 
   g_return_val_if_fail (GDK_IS_WAYLAND_TOPLEVEL (toplevel), FALSE);
   g_return_val_if_fail (GDK_IS_WAYLAND_DISPLAY (display), FALSE);
 
-  impl = GDK_WAYLAND_SURFACE (toplevel);
   display_wayland = GDK_WAYLAND_DISPLAY (display);
 
   if (!display_wayland->xdg_importer && !display_wayland->xdg_importer_v2)
@@ -4633,21 +4631,21 @@ gdk_wayland_toplevel_set_transient_for_exported (GdkToplevel *toplevel,
       return FALSE;
     }
 
-  gdk_wayland_toplevel_set_transient_for (GDK_WAYLAND_TOPLEVEL (impl), NULL);
+  gdk_wayland_toplevel_set_transient_for (wayland_toplevel, NULL);
 
   if (display_wayland->xdg_importer)
     {
-      impl->imported_transient_for =
+      wayland_toplevel->imported_transient_for =
         zxdg_importer_v1_import (display_wayland->xdg_importer, parent_handle_str);
-      zxdg_imported_v1_add_listener (impl->imported_transient_for,
+      zxdg_imported_v1_add_listener (wayland_toplevel->imported_transient_for,
                                      &xdg_imported_listener,
                                      toplevel);
     }
   else
     {
-      impl->imported_transient_for_v2 =
+      wayland_toplevel->imported_transient_for_v2 =
         zxdg_importer_v2_import_toplevel (display_wayland->xdg_importer_v2, parent_handle_str);
-      zxdg_imported_v2_add_listener (impl->imported_transient_for_v2,
+      zxdg_imported_v2_add_listener (wayland_toplevel->imported_transient_for_v2,
                                      &xdg_imported_listener_v2,
                                      toplevel);
     }
